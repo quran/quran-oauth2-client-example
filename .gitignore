@@ -26,3 +26,5 @@ docs/
 .vscode
 .nyc_output
 coverage
+
+fly.toml
