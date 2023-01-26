@@ -1,11 +1,14 @@
 const { AuthorizationCode } = require('simple-oauth2')
 const app = require('express')()
-const port = 3000
+const dotenv = require('dotenv');
+dotenv.config();
 
-const BASE_PATH = 'https://quran-oauth2-example.fly.dev'
+const PORT = process.env.PORT;
+
+const BASE_PATH = process.env.BASE_PATH;
 const createApplication = (cb) => {
   const callbackUrl = BASE_PATH + '/callback'
-  app.listen(port, (err) => {
+  app.listen(PORT, (err) => {
     if (err) return console.error(err)
     console.log(`Express server listening at ${BASE_PATH}`)
     return cb({
@@ -18,11 +21,11 @@ const createApplication = (cb) => {
 createApplication(({ app, callbackUrl }) => {
   const client = new AuthorizationCode({
     client: {
-      id: 'quran-demo',
-      secret: 'secret',
+      id: process.env.CLIENT_ID,
+      secret: process.env.CLIENT_SECRET,
     },
     auth: {
-      tokenHost: 'https://oauth2.quran.com',
+      tokenHost: process.env.TOKEN_HOST,
       tokenPath: '/oauth2/token',
       authorizePath: '/oauth2/auth',
     },
@@ -31,7 +34,7 @@ createApplication(({ app, callbackUrl }) => {
   // Authorization uri definition
   const authorizationUri = client.authorizeURL({
     redirect_uri: callbackUrl,
-    scope: 'openid offline collection.read',
+    scope: process.env.SCOPES,
     state: 'veimvfgqexjicockrwsgcb333o3a',
   })
 
