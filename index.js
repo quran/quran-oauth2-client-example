@@ -43,7 +43,7 @@ createApplication(({ app, callbackUrl }) => {
     state: "veimvfgqexjicockrwsgcb333o3a",
   });
 
-  // Initial page redirecting to Github
+  // Initial page redirecting to Quran.com
   app.get("/auth", (req, res) => {
     console.log(authorizationUri);
     res.redirect(authorizationUri);
