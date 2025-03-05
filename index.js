@@ -2,14 +2,22 @@ const { AuthorizationCode } = require("simple-oauth2");
 const path = require("path");
 const app = require("express")();
 const dotenv = require("dotenv");
+const session = require("express-session");
 dotenv.config();
 
 const PORT = process.env.PORT;
-
 const BASE_PATH = process.env.BASE_PATH;
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
+
+// Add session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
 
 const createApplication = (cb) => {
   const callbackUrl = BASE_PATH + "/callback";
@@ -61,17 +69,32 @@ createApplication(({ app, callbackUrl }) => {
     try {
       const data = await client.getToken(options);
       console.log(data);
-
       console.log("The resulting token: ", data.token);
 
-      return res.status(200).json(data.token);
+      // Store the token in session
+      req.session.token = data.token;
+      return res.redirect("/");
     } catch (error) {
       console.error("Access Token Error", error);
       return res.status(500).json("Authentication failed");
     }
   });
 
+  // Logout endpoint
+  app.get("/logout", (req, res) => {
+    // Clear the local session first
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+      }
+
+      // Redirect to the OAuth2 provider's logout endpoint
+      const logoutUrl = `${process.env.TOKEN_HOST}/oauth2/sessions/logout?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(BASE_PATH)}`;
+      res.redirect(logoutUrl);
+    });
+  });
+
   app.get("/", (req, res) => {
-    res.render("index");
+    res.render("index", { isLoggedIn: !!req.session.token });
   });
 });

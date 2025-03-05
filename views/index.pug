@@ -7,8 +7,13 @@ html(lang="en")
     script(src="https://cdn.tailwindcss.com")
     title Quran.com OAuth2 Demo
   body
-    div(class="min-h-screen flex justify-center items-center" style="background-color:#22A5AD")
-      a(class="px-4 py-2 rounded text-white flex items-center space-x-4" href="/auth" style="background-color:#257D83") 
-        img(src="https://quran.com/images/logo/Logo@192x192.png" width="32" height="32")
-        span Continue with Quran.com
-  
+    div(class="min-h-screen flex flex-col justify-center items-center" style="background-color:#22A5AD")
+      if isLoggedIn
+        div(class="mb-4 text-white") You are logged in!
+        a(class="px-4 py-2 rounded text-white flex items-center space-x-4" href="/logout" style="background-color:#257D83")
+          span Logout
+      else
+        a(class="px-4 py-2 rounded text-white flex items-center space-x-4" href="/auth" style="background-color:#257D83")
+          img(src="https://quran.com/images/logo/Logo@192x192.png" width="32" height="32")
+          span Continue with Quran.com
+
