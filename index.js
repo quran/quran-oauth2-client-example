@@ -3,6 +3,7 @@ const path = require("path");
 const app = require("express")();
 const dotenv = require("dotenv");
 const session = require("express-session");
+const jwt = require("jsonwebtoken");
 dotenv.config();
 
 const PORT = process.env.PORT;
@@ -95,6 +96,30 @@ createApplication(({ app, callbackUrl }) => {
   });
 
   app.get("/", (req, res) => {
-    res.render("index", { isLoggedIn: !!req.session.token });
+    let userDetails = null;
+    if (req.session.token) {
+      try {
+        // Decode the ID token to get user information
+        const decodedToken = jwt.decode(req.session.token.id_token);
+        userDetails = {
+          name: `${decodedToken.first_name} ${decodedToken.last_name}`,
+          email: decodedToken.email,
+          sub: decodedToken.sub,
+          auth_time: new Date(decodedToken.auth_time * 1000).toLocaleString(),
+          issued_at: new Date(decodedToken.iat * 1000).toLocaleString(),
+          expires_at: new Date(decodedToken.exp * 1000).toLocaleString(),
+          session_id: decodedToken.sid,
+          issuer: decodedToken.iss,
+          audience: decodedToken.aud.join(', '),
+          jti: decodedToken.jti
+        };
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    }
+    res.render("index", {
+      isLoggedIn: !!req.session.token,
+      userDetails
+    });
   });
 });
