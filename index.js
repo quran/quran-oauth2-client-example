@@ -69,9 +69,6 @@ createApplication(({ app, callbackUrl }) => {
 
     try {
       const data = await client.getToken(options);
-      console.log(data);
-      console.log("The resulting token: ", data.token);
-
       // Store the token in session
       req.session.token = data.token;
       return res.redirect("/");
@@ -119,7 +116,8 @@ createApplication(({ app, callbackUrl }) => {
     }
     res.render("index", {
       isLoggedIn: !!req.session.token,
-      userDetails
+      userDetails,
+      token: !req.session.token ? null : JSON.stringify(req.session.token)
     });
   });
 });
