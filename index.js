@@ -72,8 +72,25 @@ createApplication(({ app, callbackUrl }) => {
 
   // Callback service parsing the authorization token and asking for the access token
   app.get("/callback", async (req, res) => {
+    console.log("Full callback query params:", req.query);
+
+    // Check for OAuth errors first
+    if (req.query.error) {
+      console.error("OAuth Error:", req.query.error, req.query.error_description);
+      return res.status(400).json({
+        error: req.query.error,
+        description: req.query.error_description
+      });
+    }
+
     const { code } = req.query;
-    console.log(code, "this is the code");
+
+    if (!code) {
+      console.error("No authorization code received in callback");
+      return res.status(400).json({ error: "No authorization code received" });
+    }
+
+    console.log("Authorization code received:", code.substring(0, 10) + "...");
     console.log("Session before token storage:", req.session.id);
     const options = {
       code,
