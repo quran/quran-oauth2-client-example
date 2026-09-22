@@ -4,6 +4,7 @@ const app = require("express")();
 const dotenv = require("dotenv");
 const session = require("express-session");
 const jwt = require("jsonwebtoken");
+const { authorizationUrl, validateUiLocales } = require("./auth-url");
 dotenv.config();
 
 const PORT = process.env.PORT;
@@ -57,17 +58,18 @@ createApplication(({ app, callbackUrl }) => {
     },
   });
 
-  // Authorization uri definition
-  const authorizationUri = client.authorizeURL({
-    redirect_uri: callbackUrl,
-    scope: process.env.SCOPES,
-    state: "veimvfgqexjicockrwsgcb333o3a",
-  });
-
   // Initial page redirecting to Quran.com
   app.get("/auth", (req, res) => {
-    console.log(authorizationUri);
-    res.redirect(authorizationUri);
+    const uiLocales = validateUiLocales(req.query.ui_locales);
+    if (uiLocales === null) {
+      return res.status(400).send("ui_locales must contain up to 10 space-separated language tags (for example: fr-CA fr en).");
+    }
+
+    return res.redirect(authorizationUrl(client, {
+      callbackUrl,
+      scope: process.env.SCOPES,
+      state: "veimvfgqexjicockrwsgcb333o3a",
+    }, uiLocales));
   });
 
   // Callback service parsing the authorization token and asking for the access token

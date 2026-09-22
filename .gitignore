@@ -26,6 +26,8 @@ docs/
 .vscode
 .nyc_output
 coverage
+playwright-report/
+test-results/
 
 fly.toml
 
