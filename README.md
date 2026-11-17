@@ -70,6 +70,14 @@ npm run test:e2e
 
 The browser suite disables screenshots, traces, and video so callback URLs and token-bearing pages are not retained as artifacts.
 
+## Requiring a fresh sign-in
+
+Check **Require sign-in (prompt=login)** on the signed-out page, or use **Sign in again** while signed in. Both send `prompt=login` to the authorization server, requiring authentication even when a Quran Foundation session already exists.
+
+You can also open `http://localhost:3005/auth?prompt=login&ui_locales=en` directly. Omitting `prompt` keeps the normal SSO behavior. This example accepts only `login` or an omitted/empty prompt.
+
+The browser suite checks normal session reuse followed by forced sign-in and a successful callback when `OAUTH_E2E_EMAIL` and `OAUTH_E2E_PASSWORD` are configured.
+
 ## Prerequisites
 
 - Node.js 18.x or higher

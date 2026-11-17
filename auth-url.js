@@ -22,6 +22,7 @@ function authorizationUrl(client, options, uiLocales) {
     redirect_uri: options.callbackUrl,
     scope: options.scope,
     state: options.state,
+    ...(options.prompt && { prompt: options.prompt }),
     ...(uiLocales && { ui_locales: uiLocales }),
   });
 }

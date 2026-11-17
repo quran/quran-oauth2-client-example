@@ -22,4 +22,8 @@ test("adds ui_locales only when supplied", () => {
 
   assert.match(authorizationUrl(client, options, "fr-CA fr en"), /ui_locales=fr-CA\+fr\+en/);
   assert.doesNotMatch(authorizationUrl(client, options), /ui_locales=/);
+  assert.doesNotMatch(authorizationUrl(client, options), /prompt=/);
+  const forcedLogin = new URLSearchParams(authorizationUrl(client, { ...options, prompt: "login" }, "ar"));
+  assert.equal(forcedLogin.get("prompt"), "login");
+  assert.equal(forcedLogin.get("ui_locales"), "ar");
 });
