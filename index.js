@@ -64,11 +64,16 @@ createApplication(({ app, callbackUrl }) => {
     if (uiLocales === null) {
       return res.status(400).send("ui_locales must contain up to 10 space-separated language tags (for example: fr-CA fr en).");
     }
+    const prompt = req.query.prompt;
+    if (prompt !== undefined && prompt !== "" && prompt !== "login") {
+      return res.status(400).send("prompt must be login or omitted.");
+    }
 
     return res.redirect(authorizationUrl(client, {
       callbackUrl,
       scope: process.env.SCOPES,
       state: "veimvfgqexjicockrwsgcb333o3a",
+      prompt,
     }, uiLocales));
   });
 
