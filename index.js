@@ -4,7 +4,7 @@ const app = require("express")();
 const dotenv = require("dotenv");
 const session = require("express-session");
 const jwt = require("jsonwebtoken");
-const { authorizationUrl, validateUiLocales } = require("./auth-url");
+const { authorizationUrl, validateUiLocales, validatePrompt } = require("./auth-url");
 dotenv.config();
 
 const PORT = process.env.PORT;
@@ -64,9 +64,9 @@ createApplication(({ app, callbackUrl }) => {
     if (uiLocales === null) {
       return res.status(400).send("ui_locales must contain up to 10 space-separated language tags (for example: fr-CA fr en).");
     }
-    const prompt = req.query.prompt;
-    if (prompt !== undefined && prompt !== "" && prompt !== "login") {
-      return res.status(400).send("prompt must be login or omitted.");
+    const prompt = validatePrompt(req.query.prompt);
+    if (prompt === null) {
+      return res.status(400).send("prompt must be a space-separated list of login, consent, or none. none cannot be combined with other values.");
     }
 
     return res.redirect(authorizationUrl(client, {

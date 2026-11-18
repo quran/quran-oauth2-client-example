@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { authorizationUrl, validateUiLocales } = require("../auth-url");
+const { authorizationUrl, validateUiLocales, validatePrompt } = require("../auth-url");
 
 test("accepts ordered BCP 47 locale preferences", () => {
   assert.equal(validateUiLocales("fr-CA fr en"), "fr-CA fr en");
@@ -26,4 +26,16 @@ test("adds ui_locales only when supplied", () => {
   const forcedLogin = new URLSearchParams(authorizationUrl(client, { ...options, prompt: "login" }, "ar"));
   assert.equal(forcedLogin.get("prompt"), "login");
   assert.equal(forcedLogin.get("ui_locales"), "ar");
+});
+
+test("validates OIDC prompts and combinations", () => {
+  for (const prompt of ["login", "consent", "none", "login consent", "consent login"]) {
+    assert.equal(validatePrompt(prompt), prompt);
+  }
+  assert.equal(validatePrompt(undefined), undefined);
+  assert.equal(validatePrompt(""), undefined);
+  assert.equal(validatePrompt(" consent  login consent "), "consent login");
+  for (const prompt of ["none login", "consent none", "select_account", "select_account consent", "LOGIN", "create", " ", "login\tconsent", ["login"], { value: "consent" }]) {
+    assert.equal(validatePrompt(prompt), null);
+  }
 });

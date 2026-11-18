@@ -66,27 +66,32 @@ html(lang="en")
           span Sign in again
         a(class="px-4 py-2 rounded text-white flex items-center space-x-4" href="/logout" style="background-color:#257D83")
           span Logout
-      else
-        div(class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full")
-          h1(class="text-2xl font-bold mb-4 text-gray-800") Quran.com OAuth2 Demo
-          p(class="text-gray-700 mb-4") Test the hosted authorization UI in a chosen locale.
-          form(action="/auth" method="get" class="space-y-4")
-            div
-              label(class="block font-semibold text-gray-800 mb-1" for="ui_locales") Hosted UI locale
-              select(class="border rounded w-full p-2" id="ui_locales" name="ui_locales")
-                option(value="") Browser default
-                option(value="en") English
-                option(value="ar") Arabic
-                option(value="ur") Urdu
-                option(value="id") Indonesian
-                option(value="tr") Turkish
-                option(value="fr") French
-                option(value="ru") Russian
-                option(value="fr-CA fr en") French regional preference
-                option(value="de-DE") Unsupported locale fallback
-            div(class="flex items-center gap-2")
-              input(type="checkbox" id="prompt" name="prompt" value="login")
-              label(class="text-gray-800" for="prompt") Require sign-in (prompt=login)
-            button(class="px-4 py-2 rounded text-white flex items-center space-x-4" type="submit" style="background-color:#257D83")
-              img(src="https://quran.com/images/logo/Logo@192x192.png" width="32" height="32" alt="")
-              span Continue with Quran.com
+      div(class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mt-4")
+        h1(class="text-2xl font-bold mb-4 text-gray-800") Quran.com OAuth2 Demo
+        p(class="text-gray-700 mb-4") Test the hosted authorization UI and OIDC prompts.
+        form(action="/auth" method="get" class="space-y-4")
+          div
+            label(class="block font-semibold text-gray-800 mb-1" for="ui_locales") Hosted UI locale
+            select(class="border rounded w-full p-2" id="ui_locales" name="ui_locales")
+              option(value="") Browser default
+              option(value="en") English
+              option(value="ar") Arabic
+              option(value="ur") Urdu
+              option(value="id") Indonesian
+              option(value="tr") Turkish
+              option(value="fr") French
+              option(value="ru") Russian
+              option(value="fr-CA fr en") French regional preference
+              option(value="de-DE") Unsupported locale fallback
+          div
+            label(class="block font-semibold text-gray-800 mb-1" for="prompt") OIDC prompt
+            select(class="border rounded w-full p-2" id="prompt" name="prompt" aria-describedby="prompt-help")
+              option(value="") Default (normal SSO)
+              option(value="login") Require sign-in (login)
+              option(value="consent") Request consent again (consent)
+              option(value="none") No interaction (none)
+              option(value="login consent") Sign-in and consent (login consent)
+            p(class="text-sm text-gray-700 mt-2" id="prompt-help") Clients configured to skip consent still bypass it. No interaction requires a reusable provider session and consent; otherwise expect an OAuth error.
+          button(class="px-4 py-2 rounded text-white flex items-center space-x-4" type="submit" style="background-color:#257D83")
+            img(src="https://quran.com/images/logo/Logo@192x192.png" width="32" height="32" alt="")
+            span Continue with Quran.com

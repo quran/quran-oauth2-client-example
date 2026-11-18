@@ -17,6 +17,17 @@ function validateUiLocales(value) {
   return locales.join(" ");
 }
 
+function validatePrompt(value) {
+  if (value === undefined || value === "") return undefined;
+  if (typeof value !== "string") return null;
+
+  const prompts = value.trim().split(/ +/);
+  if (prompts.some((prompt) => !["none", "login", "consent"].includes(prompt))) return null;
+  if (prompts.includes("none") && prompts.length > 1) return null;
+
+  return [...new Set(prompts)].join(" ");
+}
+
 function authorizationUrl(client, options, uiLocales) {
   return client.authorizeURL({
     redirect_uri: options.callbackUrl,
@@ -27,4 +38,4 @@ function authorizationUrl(client, options, uiLocales) {
   });
 }
 
-module.exports = { authorizationUrl, validateUiLocales };
+module.exports = { authorizationUrl, validateUiLocales, validatePrompt };

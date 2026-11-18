@@ -74,17 +74,16 @@ test('keeps the existing English directional spacing and control order', async (
   expect(padding).toEqual({ left: '16px', right: '16px' });
 });
 
-test('completes login, consent, callback, and token exchange', async ({ page, context }) => {
+test('completes login and repeat consent, callback, and token exchange', async ({ page, context }) => {
   const email = process.env.OAUTH_E2E_EMAIL;
   const password = process.env.OAUTH_E2E_PASSWORD;
   test.skip(!email || !password, 'Set OAUTH_E2E_EMAIL and OAUTH_E2E_PASSWORD for the full flow');
 
   try {
-    const authResponse = await page.request.get('/auth?ui_locales=en', { maxRedirects: 0 });
-    expect(authResponse.status()).toBe(302);
-    const authorizationUrl = new URL(authResponse.headers().location);
-    authorizationUrl.searchParams.set('prompt', 'consent');
-    await page.goto(authorizationUrl.toString());
+    await page.goto('/');
+    await page.getByLabel('Hosted UI locale').selectOption('en');
+    await page.getByLabel('OIDC prompt', { exact: true }).selectOption('login consent');
+    await page.getByRole('button', { name: 'Continue with Quran.com' }).click();
     await page.locator('input[name="email"]').fill(email);
     await page.locator('input[name="password"]').fill(password);
     await page.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -93,6 +92,15 @@ test('completes login, consent, callback, and token exchange', async ({ page, co
     await expect(page.getByRole('button', { name: 'Allow', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Allow', exact: true }).click();
 
+    await page.waitForURL('/');
+    await expect(page.getByRole('heading', { name: 'Welcome!' })).toBeVisible();
+
+    await page.getByLabel('Hosted UI locale').selectOption('en');
+    await page.getByLabel('OIDC prompt', { exact: true }).selectOption('consent');
+    await page.getByRole('button', { name: 'Continue with Quran.com' }).click();
+    await page.waitForURL(/\/consent\?consent_challenge=/);
+    await expect(page.locator('input[name="password"]')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Allow', exact: true }).click();
     await page.waitForURL('/');
     await expect(page.getByRole('heading', { name: 'Welcome!' })).toBeVisible();
   } finally {

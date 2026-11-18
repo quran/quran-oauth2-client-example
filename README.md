@@ -40,7 +40,7 @@ An example OAuth2 client that shows how to integrate a web app with Quran Founda
 
 ## Testing hosted UI locales
 
-The signed-out page provides a locale dropdown. Its `ui_locales` value is sent to the authorization server with the OIDC authorization request.
+The page provides a locale dropdown, available before and after sign-in. Its `ui_locales` value is sent to the authorization server with the OIDC authorization request.
 
 - `http://localhost:3005/auth?ui_locales=ar`
 - `http://localhost:3005/auth?ui_locales=fr-CA%20fr%20en`
@@ -70,13 +70,27 @@ npm run test:e2e
 
 The browser suite disables screenshots, traces, and video so callback URLs and token-bearing pages are not retained as artifacts.
 
-## Requiring a fresh sign-in
+## Testing OIDC prompts
 
-Check **Require sign-in (prompt=login)** on the signed-out page, or use **Sign in again** while signed in. Both send `prompt=login` to the authorization server, requiring authentication even when a Quran Foundation session already exists.
+Use the **OIDC prompt** dropdown before or after sign-in. An omitted/empty prompt keeps normal SSO behavior. The example accepts the following case-sensitive values from [OIDC Core](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest):
 
-You can also open `http://localhost:3005/auth?prompt=login&ui_locales=en` directly. Omitting `prompt` keeps the normal SSO behavior. This example accepts only `login` or an omitted/empty prompt.
+| Value | Current provider behavior |
+| --- | --- |
+| `login` | Requires authentication even when a Quran Foundation session exists. The **Sign in again** link also sends this. |
+| `consent` | Requests fresh consent despite remembered consent. Clients configured with `skip_consent=true` still bypass the consent screen. |
+| `none` | Asks for no user interaction. Hydra returns `login_required` or `consent_required` when it cannot reuse authentication or consent. |
 
-The browser suite checks normal session reuse followed by forced sign-in and a successful callback when `OAUTH_E2E_EMAIL` and `OAUTH_E2E_PASSWORD` are configured.
+The space-separated combination `login consent` (or `consent login`) is supported. `none` must be used alone; unsupported values and repeated query parameters are rejected with HTTP 400.
+
+- `http://localhost:3005/auth?prompt=consent&ui_locales=en`
+- `http://localhost:3005/auth?prompt=login%20consent`
+- `http://localhost:3005/auth?prompt=none`
+
+`none` needs a reusable Hydra login and consent; a shared Quran Foundation session alone is insufficient. The local stack can return `login_required` even after normal SSO succeeds. Provider limitation: when Hydra remembers a login but the shared Quran Foundation session is missing, the hosted login handler can still render a login form for `none`. This client forwards the prompt; it does not fix that provider behavior. OAuth errors are displayed by the callback endpoint.
+
+`select_account` is intentionally excluded: although the Quran Foundation login handler recognizes it, the current Hydra stack rejects it with `invalid_request` after sign-in. An account chooser needs provider support before it can be added here.
+
+The browser suite checks prompt forwarding and validation, normal session reuse, forced sign-in, and repeat consent when `OAUTH_E2E_EMAIL` and `OAUTH_E2E_PASSWORD` are configured. Consent-screen checks require a client that does not skip consent.
 
 ## Prerequisites
 
