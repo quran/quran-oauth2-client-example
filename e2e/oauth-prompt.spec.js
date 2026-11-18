@@ -1,14 +1,35 @@
 const { test, expect } = require('@playwright/test');
 
-test('forwards login prompts and rejects unsupported or ambiguous values', async ({ request }) => {
-  const response = await request.get('/auth?prompt=login&ui_locales=ar', { maxRedirects: 0 });
-  expect(response.status()).toBe(302);
-  const authorizationUrl = new URL(response.headers().location);
-  expect(authorizationUrl.searchParams.get('prompt')).toBe('login');
-  expect(authorizationUrl.searchParams.get('ui_locales')).toBe('ar');
+test('forwards supported prompts and rejects invalid or ambiguous values', async ({ request }) => {
+  for (const prompt of ['login', 'consent', 'none', 'login consent', 'consent login']) {
+    const response = await request.get(`/auth?prompt=${encodeURIComponent(prompt)}&ui_locales=ar`, { maxRedirects: 0 });
+    expect(response.status()).toBe(302);
+    const authorizationUrl = new URL(response.headers().location);
+    expect(authorizationUrl.searchParams.get('prompt')).toBe(prompt);
+    expect(authorizationUrl.searchParams.get('ui_locales')).toBe('ar');
+  }
 
-  for (const query of ['prompt=none', 'prompt=login&prompt=login', 'prompt[]=login']) {
+  for (const query of ['', '?prompt=']) {
+    const response = await request.get(`/auth${query}`, { maxRedirects: 0 });
+    expect(response.status()).toBe(302);
+    expect(new URL(response.headers().location).searchParams.has('prompt')).toBe(false);
+  }
+
+  for (const query of ['prompt=unknown', 'prompt=CONSENT', 'prompt=select_account', 'prompt=select_account+consent', 'prompt=none+login', 'prompt=consent+none', 'prompt=login&prompt=login', 'prompt[]=login', 'prompt[value]=consent']) {
     expect((await request.get(`/auth?${query}`, { maxRedirects: 0 })).status()).toBe(400);
+  }
+});
+
+test('submits every prompt option with the chosen locale', async ({ page }) => {
+  for (const prompt of ['', 'login', 'consent', 'none', 'login consent']) {
+    await page.goto('/');
+    await page.getByLabel('Hosted UI locale').selectOption('ar');
+    await page.getByLabel('OIDC prompt', { exact: true }).selectOption(prompt);
+    const authorizationRequest = page.waitForRequest((request) => new URL(request.url()).pathname === '/oauth2/auth');
+    await page.getByRole('button', { name: 'Continue with Quran.com' }).click();
+    const authorizationUrl = new URL((await authorizationRequest).url());
+    expect(authorizationUrl.searchParams.get('prompt') || '').toBe(prompt);
+    expect(authorizationUrl.searchParams.get('ui_locales')).toBe('ar');
   }
 });
 
@@ -35,7 +56,7 @@ test('reuses normal SSO but requires credentials again with prompt=login', async
   try {
     await page.goto('/');
     await page.getByLabel('Hosted UI locale').selectOption('en');
-    await page.getByLabel('Require sign-in (prompt=login)').check();
+    await page.getByLabel('OIDC prompt', { exact: true }).selectOption('login');
     await page.getByRole('button', { name: 'Continue with Quran.com' }).click();
     await signIn();
     await finishAuthorization();
@@ -51,4 +72,10 @@ test('reuses normal SSO but requires credentials again with prompt=login', async
   } finally {
     await context.close();
   }
+});
+
+test('none returns an OAuth error without an existing login', async ({ page }) => {
+  await page.goto('/auth?prompt=none');
+  await expect(page).toHaveURL((url) => url.pathname === '/callback' && url.searchParams.get('error') === 'login_required');
+  await expect(page.locator('input[name="password"]')).toHaveCount(0);
 });
